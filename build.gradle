@@ -1,0 +1,24 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'maven-publish'
+    id "com.github.johnrengelman.shadow" version "8.1.1"
+}
+repositories {
+    jcenter()
+    maven { url "https://m2.dv8tion.net/releases" }
+    maven { url "https://jitpack.io" }
+}
+group = "net.benjaminurquhart"
+mainClassName = "net.benjaminurquhart.legible.Main"
+
+sourceCompatibility = '1.16'
+targetCompatibility = '1.16'
+
+sourceSets {
+    main.java.srcDirs = ['src']
+    main.resources.srcDirs = ['src']
+}
+dependencies {
+	implementation("org.json:json:+")
+}
