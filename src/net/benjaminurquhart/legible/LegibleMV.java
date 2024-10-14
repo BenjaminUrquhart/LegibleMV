@@ -151,15 +151,15 @@ public class LegibleMV {
 		return new JSONObject(Files.readString(Path.of(baseFolder.getAbsolutePath(), "www", "data", file + ".json")));
 	}
 	
-	private String getVariableFormatted(int index) {
+	public String getVariableFormatted(int index) {
 		return String.format("#%04d %s", index, variables[index]);
 	}
 	
-	private String getSwitchFormatted(int index) {
+	public String getSwitchFormatted(int index) {
 		return String.format("#%04d %s", index, switches[index]);
 	}
 	
-	private String formatSound(JSONObject data) {
+	public static String formatSound(JSONObject data) {
 		return String.format("%s (%d%%, %d, %d)", data.getString("name"), data.getInt("volume"), data.getInt("pitch"), data.getInt("pan"));
 	}
 	/*
@@ -453,7 +453,7 @@ public class LegibleMV {
 				if(move.has("parameters")) {
 					out.append(": ");
 					if(current == MovementCommand.ROUTE_PLAY_SE) {
-						out.append(this.formatSound(move.getJSONArray("parameters").getJSONObject(0)));
+						out.append(formatSound(move.getJSONArray("parameters").getJSONObject(0)));
 					}
 					else {
 						out.append(move.getJSONArray("parameters"));
@@ -466,10 +466,13 @@ public class LegibleMV {
 		// Movement Command (handled above)
 		case 505: return null;
 		
+		//Change Transparency (on/off)
+		case 211: return String.format("Change Transparency: %s", params.getInt(0) == 0 ? "ON" : "OFF");
+		
 		// Change Player Followers (on/off)
 		case 216: return String.format("Change Player Followers: %s", params.getInt(0) == 0 ? "ON" : "OFF");
 		
-		// Tint Screen ((RGBA), speed, wait)
+		// Tint Screen ((RGBA?), speed, wait)
 		case 223: return String.format(
 				"Tint Screen: %s, %d frame%s %s",
 				params.get(0), 

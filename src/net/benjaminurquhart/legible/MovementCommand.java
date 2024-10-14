@@ -38,24 +38,24 @@ public enum MovementCommand {
 	ROUTE_STEP_ANIME_OFF,
 	ROUTE_DIR_FIX_ON,
 	ROUTE_DIR_FIX_OFF,
-	ROUTE_THROUGH_ON,
-	ROUTE_THROUGH_OFF,
-	ROUTE_TRANSPARENT_ON,
-	ROUTE_TRANSPARENT_OFF,
+	ROUTE_THROUGH_ON("Through ON"),
+	ROUTE_THROUGH_OFF("Through OFF"),
+	ROUTE_TRANSPARENT_ON("Transparent ON"),
+	ROUTE_TRANSPARENT_OFF("Transparent OFF"),
 	ROUTE_CHANGE_IMAGE,
 	ROUTE_CHANGE_OPACITY,
 	ROUTE_CHANGE_BLEND_MODE,
-	ROUTE_PLAY_SE,
+	ROUTE_PLAY_SE("Play Sound"),
 	ROUTE_SCRIPT;
 	
 	private final String name;
 	
 	private MovementCommand() {
-		this(null);
+		this.name = name();
 	}
 	
 	private MovementCommand(String name) {
-		this.name = name == null ? name() : name;
+		this.name = name;
 	}
 	
 	@Override
