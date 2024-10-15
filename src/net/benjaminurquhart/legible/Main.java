@@ -62,6 +62,11 @@ public class Main {
 			mapFolder.mkdirs();
 		}
 		
+		File troopFolder = new File(base, "troop");
+		if(!troopFolder.exists()) {
+			troopFolder.mkdirs();
+		}
+		
 		List<String> lines = new ArrayList<>();
 		int length = game.common().length();
 		String trigger;
@@ -102,9 +107,87 @@ public class Main {
 			}
 		}
 		
-		JSONArray infos = game.mapinfo();
-		JSONObject page, map;
-		JSONArray events, pages;
+		List<String> conditions = new ArrayList<>();
+		JSONArray troops = game.troops(), pages;
+		JSONObject page, conds, actor;
+		File troopEventFolder;
+		int turnA, turnB;
+		StringBuilder turnStr = new StringBuilder();
+		for(int i = 1; i < troops.length(); i++) {
+			if(troops.get(i) instanceof JSONObject troop) {
+				pages = troop.getJSONArray("pages");
+				troopEventFolder = new File(troopFolder, String.format("%d_%s", i, FORBIDDEN.matcher(troop.getString("name")).replaceAll("_")));
+				if(!troopEventFolder.exists()) {
+					troopEventFolder.mkdirs();
+				}
+				System.out.printf("%d %s\n", i, troop.getString("name"));
+				for(int j = 0; j < pages.length(); j++) {
+					page = pages.getJSONObject(j);
+					conds = page.getJSONObject("conditions");
+					conditions.clear();
+					lines.clear();
+					
+					if(conds.getBoolean("turnEnding")) {
+						conditions.add("Turn End");
+					}
+					if(conds.getBoolean("turnValid")) {
+						turnA = conds.getInt("turnA");
+						turnB = conds.getInt("turnB");
+						
+						turnStr.delete(0, turnStr.length());
+						turnStr.append("Turn ");
+						
+						if(turnA == 0 && turnB == 0) {
+							turnStr.append(0);
+						}
+						else {
+							if(turnA > 0) {
+								turnStr.append(turnA);
+							}
+							if(turnB > 0) {
+								if(turnA > 0) {
+									turnStr.append(" + ");
+								}
+								turnStr.append(turnB);
+								turnStr.append(" * X");
+							}
+						}
+						conditions.add(turnStr.toString());
+					}
+					if(conds.getBoolean("enemyValid")) {
+						conditions.add(String.format("Enemy HP (%d) <= %d%%", conds.getInt("enemyIndex") + 1, conds.getInt("enemyHp")));
+					}
+					if(conds.getBoolean("actorValid")) {
+						actor = game.actors().getJSONObject(conds.getInt("actorId"));
+						conditions.add(String.format("%04d %s <= %d%%", actor.getInt("id"), actor.getString("name"), conds.getInt("actorHp")));
+					}
+					if(conds.getBoolean("switchValid")) {
+						conditions.add(String.format("{%s}", game.getSwitchFormatted(conds.getInt("switchId"))));
+					}
+					
+					if(conditions.isEmpty()) {
+						lines.add("Condition: Don't Run");
+					}
+					else {
+						lines.add("Condition: " + conditions);
+					}
+					
+					switch(page.getInt("span")) {
+					case 0: lines.add("Span: Battle"); break;
+					case 1: lines.add("Span: Turn"); break;
+					case 2: lines.add("Span: Moment"); break;
+					default: lines.add("Span: UNKNOWN_" + page.getInt("span"));
+					}
+					
+					lines.add("");
+					lines.addAll(game.stringifyCommands(page.getJSONArray("list"), false));
+					Files.write(Path.of(troopEventFolder.getAbsolutePath(), String.format("page_%d.txt", j + 1)), lines);
+				}
+			}
+		}
+		
+		JSONArray infos = game.mapinfo(), events;
+		JSONObject map;
 		File mapEventFolder;
 		for(int i = 1; i < infos.length(); i++) {
 			if(infos.get(i) instanceof JSONObject info) {
@@ -125,7 +208,7 @@ public class Main {
 							Files.write(
 									Path.of(
 											mapEventFolder.getAbsolutePath(), 
-											String.format("EV%03d_%s_%d.txt", j, FORBIDDEN.matcher(event.getString("name")).replaceAll("_"), k)
+											String.format("EV%03d_%s_%d.txt", j, FORBIDDEN.matcher(event.getString("name")).replaceAll("_"), k + 1)
 									), 
 									game.stringifyCommands(page.getJSONArray("list"), i, false)
 							);

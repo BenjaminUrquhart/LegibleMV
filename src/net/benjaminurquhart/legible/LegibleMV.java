@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.json.JSONArray;
@@ -13,10 +12,8 @@ import org.json.JSONObject;
 
 public class LegibleMV {
 	
-	private static final Pattern COLOR_REGEX = Pattern.compile("\u001b\\[(;|\\d)+m");
-	
 	private String[] switches = null, variables = null;
-	private JSONArray common = null, actors = null, mapinfo = null, classes = null, skills = null, weapons = null, armor = null, states = null, items = null;
+	private JSONArray common = null, actors = null, mapinfo = null, classes = null, skills = null, weapons = null, armor = null, states = null, items = null, troops = null;
 	private JSONObject system = null;
 	
 	private List<JSONObject> maps;
@@ -36,6 +33,7 @@ public class LegibleMV {
 			weapons = readJSONArray("Weapons");
 			states = readJSONArray("States");
 			skills = readJSONArray("Skills");
+			troops = readJSONArray("Troops");
 			actors = readJSONArray("Actors");
 			armor = readJSONArray("Armors");
 			items = readJSONArray("Items");
@@ -94,9 +92,14 @@ public class LegibleMV {
 		return items;
 	}
 	
+	public JSONArray troops() {
+		return troops;
+	}
+	
 	public JSONObject system() {
 		return system;
 	}
+
 	
 	public String[] variables() {
 		return variables;
@@ -115,6 +118,7 @@ public class LegibleMV {
 	}
 	
 	public List<String> stringifyCommands(JSONArray commands, int mapID, boolean colors) {
+		ANSI.enable(colors);
 		List<String> out = new ArrayList<>();
 		int length = commands.length();
 		String indentStr, cmdStr;
@@ -124,9 +128,6 @@ public class LegibleMV {
 			cmd = commands.getJSONObject(i);
 			cmdStr = stringifyCommand(cmd, mapID);
 			if(cmdStr != null) {
-				if(!colors) {
-					cmdStr = COLOR_REGEX.matcher(cmdStr).replaceAll("");
-				}
 				indentation = cmd.getInt("indent");
 				if(cmd.getInt("code") == 0) {
 					indentation--;
