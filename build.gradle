@@ -12,8 +12,8 @@ repositories {
 group = "net.benjaminurquhart"
 mainClassName = "net.benjaminurquhart.legible.Main"
 
-sourceCompatibility = '1.16'
-targetCompatibility = '1.16'
+sourceCompatibility = '1.17'
+targetCompatibility = '1.17'
 
 sourceSets {
     main.java.srcDirs = ['src']
