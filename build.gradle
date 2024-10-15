@@ -6,7 +6,7 @@ plugins {
 }
 repositories {
     jcenter()
-    maven { url "https://m2.dv8tion.net/releases" }
+    mavenCentral()
     maven { url "https://jitpack.io" }
 }
 group = "net.benjaminurquhart"
