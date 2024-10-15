@@ -69,11 +69,13 @@ public class Main {
 		
 		List<String> lines = new ArrayList<>();
 		int length = game.common().length();
+		JSONObject event;
 		String trigger;
 		int triggerVal;
 		for(int i = 0; i < length; i++) {
 			lines.clear();
-			if(game.common(i) instanceof JSONObject event) {
+			event = game.common(i);
+			if(event != null) {
 				
 				try {
 					System.out.printf("%d %s\n", i, event.getString("name"));
@@ -199,8 +201,8 @@ public class Main {
 				}
 				System.out.printf("%d %s\n", i, info.getString("name"));
 				for(int j = 1; j < events.length(); j++) {
-					if(events.get(j) instanceof JSONObject event) {
-						pages = event.getJSONArray("pages");
+					if(events.get(j) instanceof JSONObject ev) {
+						pages = ev.getJSONArray("pages");
 						for(int k = 0; k < pages.length(); k++) {
 							page = pages.getJSONObject(k);
 							
@@ -208,7 +210,7 @@ public class Main {
 							Files.write(
 									Path.of(
 											mapEventFolder.getAbsolutePath(), 
-											String.format("EV%03d_%s_%d.txt", j, FORBIDDEN.matcher(event.getString("name")).replaceAll("_"), k + 1)
+											String.format("EV%03d_%s_%d.txt", j, FORBIDDEN.matcher(ev.getString("name")).replaceAll("_"), k + 1)
 									), 
 									game.stringifyCommands(page.getJSONArray("list"), i, false)
 							);

@@ -22,3 +22,16 @@ sourceSets {
 dependencies {
 	implementation("org.json:json:+")
 }
+
+publishing {
+	publications {
+		release(MavenPublication) {
+			from components.findByName('release')
+			groupId = 'net.benjaminurquhart.legible'
+			artifactId = 'LegibleMV'
+			version = '0.1'
+			
+			from components.java
+		}
+	}
+}
