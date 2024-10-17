@@ -1,10 +1,17 @@
 package net.benjaminurquhart.legible;
 
 import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import java.util.stream.Collectors;
 
 import org.json.JSONArray;
@@ -13,12 +20,57 @@ import org.json.JSONObject;
 public class LegibleMV {
 	
 	private String[] switches = null, variables = null;
-	private JSONArray common = null, actors = null, mapinfo = null, classes = null, skills = null, weapons = null, armor = null, states = null, items = null, troops = null;
-	private JSONObject system = null;
+	
+	@JSONBind
+	private JSONArray actors = null, classes = null, skills = null, weapons = null, states = null, items = null, troops = null;
+	
+	@JSONBind("Armors")
+	private JSONArray armor;
+	
+	@JSONBind("CommonEvents")
+	private JSONArray common;
+	
+	@JSONBind("MapInfos")
+	private JSONArray mapinfo;
+	
+	@JSONBind
+	private JSONObject system;
 	
 	private List<JSONObject> maps;
 	
 	private File baseFolder;
+	
+	
+	private static Map<String, Field> boundFields;
+	
+	static {
+		try {
+			boundFields = new HashMap<>();
+			int modifiers;
+			String name;
+			for(Field field : LegibleMV.class.getDeclaredFields()) {
+				modifiers = field.getModifiers();
+				if(!Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers) && field.isAnnotationPresent(JSONBind.class)) {
+					name = field.getAnnotation(JSONBind.class).value();
+					if(name == null || name.isBlank()) {
+						name = field.getName();
+						if(name.length() > 1) {
+							name = name.substring(0, 1).toUpperCase() + name.substring(1);
+						}
+						else {
+							name = name.toUpperCase();
+						}
+					}
+					System.out.printf("%s -> %s\n", field, name);
+					boundFields.put(name, field);
+				}
+			}
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+			boundFields = null;
+		}
+	}
 	
 	public LegibleMV(String gameFolder) {
 		maps = new ArrayList<>();
@@ -26,6 +78,7 @@ public class LegibleMV {
 		baseFolder = new File(gameFolder);
 		
 		try {
+			/*
 			common = readJSONArray("CommonEvents");
 			
 			mapinfo = readJSONArray("MapInfos");
@@ -38,13 +91,55 @@ public class LegibleMV {
 			armor = readJSONArray("Armors");
 			items = readJSONArray("Items");
 			
-			system = readJSONObject("System");
+			system = readJSONObject("System");*/
+			
+			update();
 			switches = system.getJSONArray("switches").toList().toArray(String[]::new);
 			variables = system.getJSONArray("variables").toList().toArray(String[]::new);
 			
 		}
 		catch(Exception e) {
 			throwUnchecked(e);
+		}
+	}
+	
+	public void update(String... names) {
+		update(Arrays.asList(names));
+	}
+	
+	public void update(Collection<String> names) {
+		if(boundFields == null) {
+			throw new IllegalStateException("An error occurred while finding fields");
+		}
+		if(names.isEmpty()) {
+			names = boundFields.keySet();
+		}
+		
+		Field field;
+		Class<?> type;
+		for(String key : names) {
+			field = boundFields.get(key);
+			if(field != null) {
+				try {
+					type = field.getType();
+					if(type.equals(JSONObject.class)) {
+						field.set(this, readJSONObject(key));
+					}
+					else if(type.equals(JSONArray.class)) {
+						field.set(this, readJSONArray(key));
+					}
+					else {
+						throw new IllegalStateException("Expected field to be type JSONObject or JSONArray, got " + type);
+					}
+				}
+				catch(Exception e) {
+					System.err.printf("Warning: failed to update field %s (bound to key %s)\n", field.getName(), key);
+					e.printStackTrace();
+				}
+			}
+			else {
+				System.err.printf("Warning: key %s not bound to a field\n", key);
+			}
 		}
 	}
 	
